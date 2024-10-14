@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Chat Interface</title>
+    <style>
+    @media only screen and (max-width: 1024px) {
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f2f5;
+            overflow: hidden; /* Prevent body scrolling */
+        }
+
+        .login-page {
+            width: 100%;
+            max-width: 500px;
+            height: 90vh; /* Use viewport height for the login page */
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .login-button {
+            background-color: black;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 15px;
+            cursor: pointer;font-weight:bold;
+            font-size: 16px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 510px;
+            height: 96vh; /* Use viewport height for the chat container */ overflow-x:none;
+            background-color: white;margin-top:0px;
+            border-radius: 10px;margin-bottom:38px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            position: relative; /* For positioning child elements */
+            padding: 35px;
+            padding-top:70px;
+            display: none; /* Initially hide chat container */
+        }
+
+        .chat-bubble {
+            display: flex;
+            align-items: center;
+            width: 286px; /* Set bubble width to 300px */
+            padding: 15px;
+            margin: 8px 0;
+            border-radius: 15px;margin-left:6px;
+            word-wrap: break-word;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            background-color: lightgray;
+        }
+
+        .chat-bubble img {
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+        }
+
+        .input-area {
+            position: absolute; /* Position absolute to stick to the bottom */
+            bottom: 0; /* Align to the bottom of the container */
+            left: 0; /* Align to the left of the container */
+            right: 0; /* Align to the right of the container */
+            display: flex;
+            align-items: center;
+            padding: 10px; /* Added padding */
+            background-color: white;
+            border-top: 1px solid #ccc;
+            z-index: 10; /* Ensure input area is above other elements */
+        }
+        .nav-top {
+            position: absolute; /* Position absolute to stick to the bottom */
+            top: 0; /* Align to the bottom of the container */
+            left: 0; /* Align to the left of the container */
+            right: 0; /* Align to the right of the container */
+            display: flex;
+            align-items: center;
+            padding: 18px; /* Added padding */
+            background-color: white;border-bottom:1px solid black;
+            border-top: 1px solid #ccc;
+            z-index: 10; /* Ensure input area is above other elements */
+        }
+
+        .input-area input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 20px;margin-bottom:10px;
+            border: 1px solid #ccc;width:200px;
+            margin-right: 10px;
+        }
+
+        .input-area button {
+            background-color: black;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 10px 15px;
+            cursor: pointer;font-weight:bold;
+            display: flex;margin-bottom:7px;
+            justify-content: center;
+            align-items: center;
+            width: 40px; /* Fixed width for button */
+            height: 40px; /* Fixed height for button */
+        }
+
+        @media (max-width: 500px) {
+            .input-area {
+                padding: 10px;margin-bottom:5px;
+            }
+
+            .input-area input {
+                padding: 10px;
+                margin-right: 5px;
+                font-size: 14px; /* Adjust font size */
+            }
+
+            .input-area button {
+                padding: 10px;
+                font-size: 16px; /* Adjust font size */
+            }
+        }
+
+        /* Style for chat bubbles */
+        #chat-container {
+            flex: 1; /* Allow chat container to grow and fill available space */
+            padding-bottom: 70px; /* Leave space for the fixed input area */
+            background-color:white; border-radius:15px;overflow-x:none;margin-left:1px;margin-right: 3px;
+            overflow-y: auto; /* Enable vertical scrolling */
+        }
+    }
+    @media only screen and (min-width: 1025px) {
+  body::before {
+    content: "Website ini hanya bisa diakses di perangkat mobile dan tablet.";
+    display: block;
+    text-align: center;
+    font-size: 20px;
+    padding: 20px;
+  }
+}
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+
+<body>
+    <div id="containLog" class="login-page">
+      <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiandJw37y2SwtQACjKGkLUADugYYfFh2F-Ilrcq7A7YQ847NzFbhVoXEcZM5_6CWuf1Jb5glquHX5gGDVxfynybBnKZaMjn5gBMAR5IovmNV5TadqfH649qUcIqRU9DUlqedvo9VqYVMRVOyY3OUJq4cuSut5T1LiJObMAOiODf5Mn82HW43X8H6xKYPA/s2560/20241014_162526.jpg" width="200" height="200">
+        
+        <button class="login-button" onclick="loginWithGoogle()"><i class="fab fa-google" style="margin-right:5px;"></i> Continue with Google</button>
+    </div>
+
+    <div id="containChat" class="chat-container">
+       <div class="nav-top" ><img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh9Dw20gx9EBgXyz5hne6a6h-P2_Vis6nYdF2RFMEBozqRK4jJ-_LdPnNRUeocZNJiOpQOFvOcp5eT9cXxSMytkqeEgkY-MfR7GdeCNbmVQhRAEFQ9V0oMa035RxI59FPzg_aY2fkBF1HoBgMXE8E5mICmaicrCkOTlwzWeGqiZANfG_A7eAo8LM7eX0lI/s3264/20241014_161912.jpg" width="450" height="30" ></div><div id="chat-container"></div>
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Type a message">
+            <button onclick="sendMessage()"> <i class="fas fa-chevron-right"></i></button>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBffqlCF8jE8xZ4yqnx_oJMzGUCJKHbaMk",
+            authDomain: "lts-chat-9641c.firebaseapp.com",
+            projectId: "lts-chat-9641c",
+            storageBucket: "lts-chat-9641c.appspot.com",
+            messagingSenderId: "252173466609",
+            appId: "1:252173466609:web:4394b80c271a3e7a846250",
+            databaseURL: "https://lts-chat-9641c-default-rtdb.asia-southeast1.firebasedatabase.app/"
+        };
+        firebase.initializeApp(firebaseConfig);
+
+        // Login with Google
+        function loginWithGoogle() {
+            var provider = new firebase.auth.GoogleAuthProvider();
+            firebase.auth().signInWithPopup(provider).then(function (result) {
+                console.log("User signed in:", result.user);
+                updateProfile(result.user);
+                loadChatHistory(); // Load chat history after login
+            }).catch(function (error) {
+                console.error("Error signing in:", error);
+            });
+        }
+
+        // Update profile image and username
+        function updateProfile(user) {
+            document.getElementById('containLog').style.display = 'none';
+            document.getElementById('containChat').style.display = 'flex'; // Show chat container
+        }
+
+        // Load chat history
+        function loadChatHistory() {
+            const chatContainer = document.getElementById('chat-container');
+            chatContainer.innerHTML = ''; // Clear previous messages
+
+            // Listen for new chat messages in the database
+            firebase.database().ref('chats').on('child_added', snapshot => {
+                const message = snapshot.val();
+                console.log("Loaded message:", message); // Debugging line
+                displayMessage(message);
+            }, error => {
+                console.error("Error loading messages:", error);
+            });
+        }
+
+        // Display a message in the chat
+        function displayMessage(message) {
+            const chatContainer = document.getElementById('chat-container');
+            const chatBubble = document.createElement('div');
+            chatBubble.classList.add('chat-bubble');
+
+            const profileImage = message.senderProfileImage || 'default_profile.jpg';
+            chatBubble.innerHTML = `<img src="${profileImage}" alt="Profile Image">
+                                    <div>
+                                        <strong>${message.senderUsername}</strong><br>
+                                        ${message.text}
+                                    </div>`;
+            chatContainer.appendChild(chatBubble);
+            chatContainer.scrollTop = chatContainer.scrollHeight; // Auto-scroll to the bottom
+        }
+
+        // Send message
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const messageText = messageInput.value.trim();
+
+            if (messageText) {
+                const currentUser = firebase.auth().currentUser;
+
+                const messageData = {
+                    senderId: currentUser.uid,
+                    senderUsername: currentUser.displayName || 'Anonymous',
+                    senderProfileImage: currentUser.photoURL || 'default_profile.jpg',
+                    text: messageText,
+                    timestamp: Date.now()
+                };
+
+                // Save message to chat in the database
+                firebase.database().ref('chats').push(messageData)
+                    .then(() => {
+                        messageInput.value = ''; // Clear input after sending
+                    })
+                    .catch(error => {
+                        console.error('Error sending message:', error);
+                    });
+            } else {
+                alert("Please enter a message.");
+            }
+        }
+
+        // Monitor auth state changes
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                updateProfile(user);
+                loadChatHistory(); // Load chat history when user logs in
+            } else {
+                document.getElementById('containLog').style.display = 'flex'; // Show login page
+                document.getElementById('containChat').style.display = 'none'; // Hide chat container
+            }
+        });
+    </script>
+</body>
+
+</html>
